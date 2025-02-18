@@ -6,7 +6,7 @@ const router = Router();
 const userService = new UserService();
 const userController = new UserController(userService);
 
-router.get("/", userController.getAllUsers);
+router.get("/", userController.getUsers);
 router.get("/:id", userController.getUserById);
 router.post("/", userController.createUser);
 router.put("/:id", userController.updateUser);
