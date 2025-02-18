@@ -1,30 +1,38 @@
-import { apiClient } from "../config/apiConfig";
-import { CreateUserDTO, UpdateUserDTO, User } from "../models";
+import { User } from "../models";
+import { db } from "../config/firebaseConfig";
 
 export class UserService {
-    public async getUsers(): Promise<User[]> {
-        const response = await apiClient.get<User[]>('/api/users?page=2');
-        return response.data;
+  public async getUser(userId: string): Promise<User | null> {
+    const user = await db.collection("users").doc(userId).get();
+
+    if (!user.exists) {
+      return null;
     }
 
-    public async createUser(user: CreateUserDTO): Promise<User> {
-        const response = await apiClient.post<User>('/api/users', user);
-        return response.data;
-    }
+    return user.data() as User;
+  }
 
-    public async getUser(id: string): Promise<User> {
-        const response = await apiClient.get<User>(`/api/users/${id}`);
-        return response.data;
-    }
+  public async getUsers(): Promise<User[]> {
+    const users = await db.collection("users").get();
+    return users.docs.map((us) => us.data() as User);
+  }
 
-  
-    public async updateUser(user: UpdateUserDTO, userId: string ): Promise<User> {
-        const response = await apiClient.put<User>(`/api/users/${userId}`, user);
-        return response.data;
-    }
+  public async createUser(user: User): Promise<User> {
+    const createdUserRef = await db.collection("users").add(user);
+    const createdUser = await createdUserRef.get();
+    return createdUser.data() as User;
+  }
 
+  public async updateUser(userId: string, user: User): Promise<User> {
+    const updatedUserRef = await db.collection("users").doc(userId);
+    await updatedUserRef.update(user);
 
-    public async deleteUser(id: number): Promise<void> {
-        await apiClient.delete(`/api/users/${id}`);
-    }
+    const updatedUser = await updatedUserRef.get();
+    return updatedUser.data() as User;
+  }
+
+  public async deleteUser(userId: string): Promise<void> {
+    const deletedUser = await db.collection("users").doc(userId);
+    await deletedUser.delete();
+  }
 }
